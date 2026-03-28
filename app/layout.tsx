@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { SITE_ORIGIN } from '@/lib/site'
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://geo.darlingmartech.com'
+const BASE_URL = SITE_ORIGIN
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

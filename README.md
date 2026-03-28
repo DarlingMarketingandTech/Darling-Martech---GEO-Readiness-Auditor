@@ -2,7 +2,7 @@
 
 > **"Is your site visible to AI? Find out in 60 seconds."**
 
-A free SMB-focused GEO (Generative Engine Optimization) audit tool that scores your website's AI visibility and delivers a prioritized fix roadmap. Live at [geo.darlingmartech.com](https://geo.darlingmartech.com).
+A free SMB-focused GEO (Generative Engine Optimization) audit tool that scores your website's AI visibility and delivers a prioritized fix roadmap. Deployed at [darling-martech.vercel.app](https://darling-martech.vercel.app/) (override with `NEXT_PUBLIC_BASE_URL` when you add a custom domain).
 
 ---
 
@@ -78,7 +78,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | Variable | Required | Description |
 |---|---|---|
 | `RESEND_API_KEY` | Yes (email gate) | [Get from resend.com](https://resend.com) |
-| `NEXT_PUBLIC_BASE_URL` | Yes (sitemap / OG) | e.g. `https://geo.darlingmartech.com` |
+| `RESEND_FROM` | Recommended | Verified sender, e.g. `GEO Auditor <mail@yourdomain.com>`. Defaults to Resend onboarding address if unset. |
+| `NEXT_PUBLIC_BASE_URL` | Yes (sitemap / OG / links) | e.g. `https://darling-martech.vercel.app` |
 | `UPSTASH_REDIS_REST_URL` | Recommended | [Upstash Redis](https://upstash.com) REST URL |
 | `UPSTASH_REDIS_REST_TOKEN` | Recommended | Upstash Redis REST token |
 
@@ -103,6 +104,7 @@ Deploy to Vercel. Add the following environment variables in the Vercel dashboar
 | Variable | Description |
 |---|---|
 | `RESEND_API_KEY` | Resend API key for email delivery |
-| `NEXT_PUBLIC_BASE_URL` | `https://geo.darlingmartech.com` |
+| `NEXT_PUBLIC_BASE_URL` | `https://darling-martech.vercel.app` |
+| `RESEND_FROM` | Your verified Resend sender (optional; see table above) |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token |

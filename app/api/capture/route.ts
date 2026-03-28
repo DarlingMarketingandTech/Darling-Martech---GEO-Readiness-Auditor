@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Resend } from 'resend'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limiter'
+import { SITE_ORIGIN, SITE_HOSTNAME, geoOptimizationUrl } from '@/lib/site'
 
 // ---------------------------------------------------------------------------
 // Validation schemas
@@ -260,7 +261,7 @@ function buildEmailHtml(data: CaptureRequest): string {
                     AI visibility techniques your competitors haven&rsquo;t discovered yet. Most clients
                     see measurable improvements in AI citation rates within 30 days.
                   </p>
-                  <a href="https://darlingmartech.com/services/website-ux/geo-optimization"
+                  <a href="${geoOptimizationUrl()}"
                      style="display:inline-block;background:#2563eb;color:#ffffff;padding:14px 28px;
                             border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">
                     Get Your Free GEO Optimization Consultation →
@@ -276,12 +277,12 @@ function buildEmailHtml(data: CaptureRequest): string {
           <td style="border-top:1px solid #f3f4f6;padding:20px 40px;background:#f9fafb">
             <p style="margin:0 0 4px;font-size:12px;color:#9ca3af">
               You requested this report at
-              <a href="https://geo.darlingmartech.com" style="color:#6b7280">geo.darlingmartech.com</a>
+              <a href="${SITE_ORIGIN}" style="color:#6b7280">${SITE_HOSTNAME}</a>
               using <strong>${email}</strong>.
             </p>
             <p style="margin:0;font-size:12px;color:#9ca3af">
               Darling Marketing &amp; Tech &middot;
-              <a href="https://darlingmartech.com" style="color:#6b7280">darlingmartech.com</a>
+              <a href="${SITE_ORIGIN}" style="color:#6b7280">${SITE_HOSTNAME}</a>
             </p>
           </td>
         </tr>
@@ -366,8 +367,11 @@ export async function POST(req: NextRequest) {
     const resend = new Resend(apiKey)
     const domain = domainFromUrl(data.auditData.url)
 
+    const resendFrom =
+      process.env.RESEND_FROM ?? 'GEO Auditor <onboarding@resend.dev>'
+
     const { data: emailData, error } = await resend.emails.send({
-      from: 'GEO Auditor <geo-auditor@darlingmartech.com>',
+      from: resendFrom,
       to: data.email,
       subject: `Your GEO Readiness Report for ${domain} — Score: ${data.auditData.score}/100`,
       html: buildEmailHtml(data),
@@ -384,10 +388,10 @@ export async function POST(req: NextRequest) {
         ),
         '',
         'Ready to fix these issues?',
-        'https://darlingmartech.com/services/website-ux/geo-optimization',
+        geoOptimizationUrl(),
         '',
         '---',
-        'Darling Marketing & Tech · darlingmartech.com',
+        `Darling Marketing & Tech · ${SITE_HOSTNAME}`,
       ].join('\n'),
     })
 

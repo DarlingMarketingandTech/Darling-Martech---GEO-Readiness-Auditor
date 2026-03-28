@@ -1,5 +1,6 @@
 import AuditForm from '@/components/AuditForm'
 import type { Metadata } from 'next'
+import { SITE_ORIGIN, SITE_HOSTNAME, geoOptimizationUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'GEO Readiness Auditor — Is Your Site Visible to AI?',
@@ -23,14 +24,14 @@ export default function HomePage() {
       <nav className="border-b px-6 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <a
-            href="https://darlingmartech.com"
+            href={SITE_ORIGIN}
             className="text-sm font-semibold transition-colors"
             style={{ color: 'rgba(255,255,255,0.7)' }}
           >
             ← Darling Marketing &amp; Tech
           </a>
           <a
-            href="https://darlingmartech.com/services/website-ux/geo-optimization"
+            href={geoOptimizationUrl()}
             className="text-sm font-semibold transition-colors"
             style={{ color: '#FF4D00' }}
           >
@@ -123,7 +124,7 @@ export default function HomePage() {
           </p>
           <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.35)' }}>— Darling Marketing &amp; Tech</p>
           <a
-            href="https://darlingmartech.com/services/website-ux/geo-optimization"
+            href={geoOptimizationUrl()}
             className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl transition-colors duration-150"
             style={{ background: '#FF4D00', color: '#fff' }}
           >
@@ -140,11 +141,11 @@ export default function HomePage() {
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
           © {new Date().getFullYear()} Darling Marketing &amp; Tech ·{' '}
           <a
-            href="https://darlingmartech.com"
+            href={SITE_ORIGIN}
             className="transition-colors"
             style={{ color: 'rgba(255,255,255,0.25)' }}
           >
-            darlingmartech.com
+            {SITE_HOSTNAME}
           </a>
         </p>
       </footer>

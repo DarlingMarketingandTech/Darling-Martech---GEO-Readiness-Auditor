@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { AuditResult } from '@/lib/auditor'
+import { geoOptimizationUrl } from '@/lib/site'
 import ScoreGauge from '@/components/ScoreGauge'
 import CheckItem from '@/components/CheckItem'
 import EmailGate from '@/components/EmailGate'
@@ -66,7 +67,7 @@ export default function ResultsPage() {
             ← Audit Another Site
           </Link>
           <a
-            href="https://darlingmartech.com/services/website-ux/geo-optimization"
+            href={geoOptimizationUrl()}
             className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
             style={{ background: '#FF4D00', color: '#fff' }}
           >
@@ -156,7 +157,7 @@ export default function ResultsPage() {
               visibility improvements your competitors haven&apos;t discovered yet.
             </p>
             <a
-              href="https://darlingmartech.com/services/website-ux/geo-optimization"
+              href={geoOptimizationUrl()}
               className="inline-flex items-center gap-2 font-bold px-6 py-3 rounded-xl transition-colors"
               style={{ background: '#fff', color: '#FF4D00' }}
             >

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { AuditResult } from '@/lib/auditor'
+import { SITE_ORIGIN, SITE_HOSTNAME } from '@/lib/site'
 
 interface AuditFormProps {
   onResult?: (result: AuditResult) => void
@@ -27,7 +28,7 @@ function validateUrl(input: string): boolean {
 }
 
 /** Demo URL shown when the user clicks "Try with example domain" */
-const DEMO_URL = 'https://darlingmartech.com'
+const DEMO_URL = SITE_ORIGIN
 
 export default function AuditForm({ onResult, onError }: AuditFormProps) {
   const router = useRouter()
@@ -182,7 +183,7 @@ export default function AuditForm({ onResult, onError }: AuditFormProps) {
           className="underline underline-offset-2 transition-colors disabled:opacity-40"
           style={{ color: 'rgba(255,77,0,0.8)' }}
         >
-          Try with darlingmartech.com →
+          Try with {SITE_HOSTNAME} →
         </button>
       </p>
     </form>

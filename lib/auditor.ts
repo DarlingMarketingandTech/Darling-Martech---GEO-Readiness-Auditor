@@ -10,6 +10,7 @@ import {
   checkMetaTags,
 } from './content-checker'
 import { calculateScore, buildSummary } from './scoring'
+import { SITE_ORIGIN } from './site'
 
 // ---------------------------------------------------------------------------
 // Exported types
@@ -53,7 +54,7 @@ export async function runAudit(url: string): Promise<AuditResult> {
 
   // 1. Fetch the page HTML — hard timeout keeps API response under 10 s
   const response = await fetch(url, {
-    headers: { 'User-Agent': 'GEOAuditor/1.0 (+https://geo.darlingmartech.com)' },
+    headers: { 'User-Agent': `GEOAuditor/1.0 (+${SITE_ORIGIN})` },
     signal: AbortSignal.timeout(10000), // 10 s max per the product spec
   })
 

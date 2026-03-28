@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { SITE_HOSTNAME } from '@/lib/site'
 
 export const runtime = 'edge'
 
@@ -227,7 +228,7 @@ export default function Image() {
             fontSize: 14,
           }}
         >
-          geo.darlingmartech.com
+          {SITE_HOSTNAME}
         </div>
       </div>
     ),
