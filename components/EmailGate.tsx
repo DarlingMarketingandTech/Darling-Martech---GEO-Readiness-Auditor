@@ -14,6 +14,7 @@ function isValidEmail(email: string): boolean {
 }
 
 export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -23,6 +24,10 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
     e.preventDefault()
     setError('')
 
+    if (!name.trim()) {
+      setError('Please enter your name')
+      return
+    }
     if (!email.trim()) {
       setError('Please enter your email address')
       return
@@ -37,7 +42,7 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
       const res = await fetch('/api/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), auditData: result }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), auditData: result }),
       })
 
       const data = await res.json()
@@ -94,7 +99,7 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </motion.div>
-            <p className="font-semibold text-white">Report sent to {email}.</p>
+            <p className="font-semibold text-white">Report sent to {email}, {name}.</p>
             <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
               Check your inbox for the complete fix roadmap.
             </p>
@@ -142,37 +147,67 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
 
             <form
               onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-3"
+              className="flex flex-col gap-3"
               noValidate
             >
-              <label htmlFor="email-gate-input" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email-gate-input"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@yourcompany.com"
-                disabled={loading}
-                autoComplete="email"
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm disabled:opacity-50 focus:outline-none transition-all"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  color: '#fff',
-                }}
-                onFocus={e => {
-                  e.currentTarget.style.border = '1px solid #FF4D00'
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,77,0,0.15)'
-                }}
-                onBlur={e => {
-                  e.currentTarget.style.border = '1px solid rgba(255,255,255,0.12)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-                aria-describedby={error ? 'email-gate-error' : undefined}
-                aria-invalid={!!error}
-              />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <label htmlFor="name-gate-input" className="sr-only">
+                  Full name
+                </label>
+                <input
+                  id="name-gate-input"
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Your name"
+                  disabled={loading}
+                  autoComplete="name"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm disabled:opacity-50 focus:outline-none transition-all"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#fff',
+                  }}
+                  onFocus={e => {
+                    e.currentTarget.style.border = '1px solid #FF4D00'
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,77,0,0.15)'
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.style.border = '1px solid rgba(255,255,255,0.12)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                  aria-describedby={error ? 'email-gate-error' : undefined}
+                  aria-invalid={!!error}
+                />
+                <label htmlFor="email-gate-input" className="sr-only">
+                  Email address
+                </label>
+                <input
+                  id="email-gate-input"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@yourcompany.com"
+                  disabled={loading}
+                  autoComplete="email"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm disabled:opacity-50 focus:outline-none transition-all"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#fff',
+                  }}
+                  onFocus={e => {
+                    e.currentTarget.style.border = '1px solid #FF4D00'
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,77,0,0.15)'
+                  }}
+                  onBlur={e => {
+                    e.currentTarget.style.border = '1px solid rgba(255,255,255,0.12)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                  aria-describedby={error ? 'email-gate-error' : undefined}
+                  aria-invalid={!!error}
+                />
+              </div>
               <motion.button
                 type="submit"
                 disabled={loading}

@@ -36,6 +36,10 @@ const AuditResultSchema = z.object({
 })
 
 const RequestSchema = z.object({
+  name: z.preprocess(
+    val => (typeof val === 'string' ? val.trim() : val),
+    z.string().min(1, 'Please enter your name').max(100)
+  ),
   email: z.preprocess(
     val => (typeof val === 'string' ? val.trim().toLowerCase() : val),
     z.string().email('Please enter a valid email address')
@@ -103,7 +107,7 @@ function domainFromUrl(url: string): string {
 }
 
 function buildEmailHtml(data: CaptureRequest): string {
-  const { email, auditData } = data
+  const { name, email, auditData } = data
   const { url, score, checks, summary, fetchedAt } = auditData
   const domain = domainFromUrl(url)
   const color = scoreColor(score)
@@ -180,7 +184,7 @@ function buildEmailHtml(data: CaptureRequest): string {
               Darling Marketing &amp; Tech
             </p>
             <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#ffffff;line-height:1.2">
-              Your GEO Readiness Report
+              Your GEO Readiness Report${name ? `, ${name}` : ''}
             </h1>
             <p style="margin:0;font-size:14px;color:#bfdbfe">
               ${domain} &nbsp;·&nbsp; Audited ${auditDate}
@@ -377,6 +381,8 @@ export async function POST(req: NextRequest) {
       html: buildEmailHtml(data),
       // Plain-text fallback
       text: [
+        `Hi ${data.name},`,
+        '',
         `Your GEO Readiness Report for ${domain}`,
         `Score: ${data.auditData.score}/100 — ${scoreLabel(data.auditData.score)}`,
         '',
@@ -409,6 +415,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Your GEO Readiness Report has been sent to ${data.email}.`,
+      name: data.name,
       emailId: emailData?.id,
     })
   } catch (err: unknown) {
