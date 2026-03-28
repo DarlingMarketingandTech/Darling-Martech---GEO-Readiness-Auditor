@@ -57,7 +57,7 @@ export default function HomePage() {
           className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 font-heading"
           style={{ color: '#ffffff' }}
         >
-          Is your site{' '}
+          Is Your Site{' '}
           <span
             style={{
               background: 'linear-gradient(135deg, #FF4D00 0%, #FF8C42 100%)',
@@ -66,14 +66,14 @@ export default function HomePage() {
               backgroundClip: 'text',
             }}
           >
-            visible to AI?
-          </span>
+            Visible to AI?
+          </span>{' '}
+          Find Out in 60 Seconds
         </h1>
 
         <p className="text-lg mb-10 max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          Find out in 60 seconds. Get a 0–100 GEO Readiness Score with exactly
-          what&apos;s blocking your site from appearing in ChatGPT, Perplexity,
-          and Claude results.
+          Free GEO readiness audit — checks schema, content structure, AI bot
+          access, and E-E-A-T signals
         </p>
 
         <AuditForm />
