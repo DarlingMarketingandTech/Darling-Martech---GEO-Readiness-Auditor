@@ -1,11 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { AuditResult } from '@/lib/auditor'
 
 interface EmailGateProps {
   result: AuditResult
   onUnlocked: () => void
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 }
 
 export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
@@ -17,8 +22,13 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!email) {
+
+    if (!email.trim()) {
       setError('Please enter your email address')
+      return
+    }
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address')
       return
     }
 
@@ -27,10 +37,7 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
       const res = await fetch('/api/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          auditData: result,
-        }),
+        body: JSON.stringify({ email: email.trim(), auditData: result }),
       })
 
       const data = await res.json()
@@ -48,60 +55,161 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
     }
   }
 
-  if (sent) {
-    return (
-      <div className="text-center py-8">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <p className="font-semibold text-gray-900">Full report sent!</p>
-        <p className="text-sm text-gray-500 mt-1">Check your inbox for the complete fix roadmap.</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
-      <div className="flex items-start gap-3 mb-4">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
-          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </div>
-        <div>
-          <h3 className="font-semibold text-gray-900">Unlock Your Full Fix Roadmap</h3>
-          <p className="text-sm text-gray-600 mt-0.5">
-            Enter your email to get the complete prioritized report — including every fix needed to appear in ChatGPT, Perplexity, and Claude.
-          </p>
-        </div>
-      </div>
+    <div
+      className="rounded-2xl p-6"
+      style={{
+        border: '1px solid rgba(255,77,0,0.25)',
+        background: 'rgba(255,77,0,0.06)',
+      }}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {sent ? (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="text-center py-4"
+            role="status"
+            aria-live="polite"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 20 }}
+              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)' }}
+            >
+              <svg
+                className="w-6 h-6"
+                style={{ color: '#22c55e' }}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </motion.div>
+            <p className="font-semibold text-white">Report sent to {email}.</p>
+            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Check your inbox for the complete fix roadmap.
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="form"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: '#FF4D00' }}
+              >
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3
+                  className="font-semibold font-heading"
+                  style={{ color: '#fff' }}
+                >
+                  Unlock full report
+                </h3>
+                <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Enter your email to get the complete prioritized report — including every fix needed to appear in ChatGPT, Perplexity, and Claude.
+                </p>
+              </div>
+            </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="you@yourcompany.com"
-          disabled={loading}
-          className="flex-1 px-4 py-2.5 rounded-xl border border-blue-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm disabled:opacity-50 bg-white"
-          aria-label="Email address"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-xl transition-colors duration-150 text-sm whitespace-nowrap"
-        >
-          {loading ? 'Sending…' : 'Get Full Report →'}
-        </button>
-      </form>
-      {error && (
-        <p className="mt-2 text-sm text-red-600" role="alert">
-          {error}
-        </p>
-      )}
-      <p className="mt-3 text-xs text-gray-400">No spam — just your report. Unsubscribe anytime.</p>
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col sm:flex-row gap-3"
+              noValidate
+            >
+              <label htmlFor="email-gate-input" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email-gate-input"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@yourcompany.com"
+                disabled={loading}
+                autoComplete="email"
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm disabled:opacity-50 focus:outline-none transition-all"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: '#fff',
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.border = '1px solid #FF4D00'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,77,0,0.15)'
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.border = '1px solid rgba(255,255,255,0.12)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+                aria-describedby={error ? 'email-gate-error' : undefined}
+                aria-invalid={!!error}
+              />
+              <motion.button
+                type="submit"
+                disabled={loading}
+                whileHover={{ scale: loading ? 1 : 1.03 }}
+                whileTap={{ scale: loading ? 1 : 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="px-5 py-2.5 rounded-xl font-semibold text-white text-sm whitespace-nowrap disabled:opacity-60 focus:outline-none focus-visible:ring-2"
+                style={{ background: '#FF4D00' }}
+              >
+                {loading ? 'Sending…' : 'Get Full Report →'}
+              </motion.button>
+            </form>
+
+            <div aria-live="assertive" aria-atomic="true">
+              <AnimatePresence>
+                {error && (
+                  <motion.p
+                    id="email-gate-error"
+                    role="alert"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-2 text-sm text-red-400"
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <p className="mt-3 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              We&apos;ll never spam you. Unsubscribe anytime.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

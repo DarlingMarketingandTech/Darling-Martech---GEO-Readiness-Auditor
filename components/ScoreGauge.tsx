@@ -1,38 +1,57 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { getScoreColor, getScoreLabel } from '@/lib/scoring'
+import { useEffect, useState } from 'react'
+import { animate } from 'framer-motion'
 
 interface ScoreGaugeProps {
   score: number
   size?: number
 }
 
+function getGaugeColor(score: number): string {
+  if (score >= 71) return '#22c55e' // green
+  if (score >= 41) return '#FF4D00' // electric orange
+  return '#ef4444'                  // red
+}
+
+function getGaugeLabel(score: number): string {
+  if (score >= 71) return 'AI-Ready'
+  if (score >= 41) return 'Getting There'
+  return 'Needs Work'
+}
+
 export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
-  const progressRef = useRef<SVGCircleElement>(null)
+  const [displayScore, setDisplayScore] = useState(0)
+  const [animatedOffset, setAnimatedOffset] = useState(0)
 
   const radius = (size / 2) * 0.7
   const circumference = 2 * Math.PI * radius
-  // Only fill the top 270° of the circle (bottom gap)
   const arcLength = circumference * 0.75
-  const offset = arcLength - (score / 100) * arcLength
 
-  const color = getScoreColor(score)
-  const label = getScoreLabel(score)
+  const color = getGaugeColor(score)
+  const label = getGaugeLabel(score)
+  const center = size / 2
+  const rotation = 135
 
   useEffect(() => {
-    const el = progressRef.current
-    if (!el) return
-    el.style.strokeDashoffset = String(arcLength) // start empty
-    const raf = requestAnimationFrame(() => {
-      el.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
-      el.style.strokeDashoffset = String(offset)
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [score, arcLength, offset])
+    const radius = (size / 2) * 0.7
+    const circumference = 2 * Math.PI * radius
+    const arcLen = circumference * 0.75
 
-  const center = size / 2
-  const rotation = 135 // start from bottom-left
+    setAnimatedOffset(arcLen)
+    setDisplayScore(0)
+
+    const controls = animate(0, score, {
+      duration: 1.3,
+      ease: [0.4, 0, 0.2, 1],
+      onUpdate(v) {
+        setDisplayScore(Math.round(v))
+        setAnimatedOffset(arcLen - (v / 100) * arcLen)
+      },
+    })
+
+    return () => controls.stop()
+  }, [score, size])
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -49,7 +68,7 @@ export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
           cy={center}
           r={radius}
           fill="none"
-          stroke="#e5e7eb"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth={size * 0.07}
           strokeDasharray={`${arcLength} ${circumference}`}
           strokeLinecap="round"
@@ -57,7 +76,6 @@ export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
         />
         {/* Progress arc */}
         <circle
-          ref={progressRef}
           cx={center}
           cy={center}
           r={radius}
@@ -65,9 +83,10 @@ export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
           stroke={color}
           strokeWidth={size * 0.07}
           strokeDasharray={`${arcLength} ${circumference}`}
-          strokeDashoffset={arcLength}
+          strokeDashoffset={animatedOffset}
           strokeLinecap="round"
           transform={`rotate(${rotation} ${center} ${center})`}
+          style={{ filter: `drop-shadow(0 0 ${size * 0.04}px ${color}66)` }}
         />
         {/* Score number */}
         <text
@@ -78,8 +97,9 @@ export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
           fontSize={size * 0.22}
           fontWeight="700"
           fill={color}
+          fontFamily="'Cabinet Grotesk', system-ui, sans-serif"
         >
-          {score}
+          {displayScore}
         </text>
         {/* "/100" label */}
         <text
@@ -87,17 +107,25 @@ export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
           y={center + size * 0.14}
           textAnchor="middle"
           fontSize={size * 0.09}
-          fill="#9ca3af"
+          fill="rgba(255,255,255,0.3)"
         >
           / 100
         </text>
       </svg>
+
       <span
         className="text-sm font-semibold px-3 py-1 rounded-full"
-        style={{ background: `${color}22`, color }}
+        style={{
+          background: `${color}22`,
+          color,
+          border: `1px solid ${color}44`,
+        }}
       >
         {label}
       </span>
+
+      {/* Invisible target for final value (used by aria) */}
+      <span className="sr-only">{score} out of 100 — {label}</span>
     </div>
   )
 }
