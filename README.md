@@ -67,7 +67,7 @@ Returns a **0–100 GEO Readiness Score** with prioritized fixes. First 3 checks
 ```bash
 npm install
 cp .env.example .env.local
-# Add your RESEND_API_KEY to .env.local
+# Fill in your keys — see Environment Variables below
 npm run dev
 ```
 
@@ -77,7 +77,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Required | Description |
 |---|---|---|
-| `RESEND_API_KEY` | Yes (for email gate) | [Get from resend.com](https://resend.com) |
+| `RESEND_API_KEY` | Yes (email gate) | [Get from resend.com](https://resend.com) |
+| `NEXT_PUBLIC_BASE_URL` | Yes (sitemap / OG) | e.g. `https://geo.darlingmartech.com` |
+| `UPSTASH_REDIS_REST_URL` | Recommended | [Upstash Redis](https://upstash.com) REST URL |
+| `UPSTASH_REDIS_REST_TOKEN` | Recommended | Upstash Redis REST token |
+
+> **Tip:** `UPSTASH_REDIS_*` are required for persistent rate-limiting across serverless instances. Without them the tool falls back to an in-process store that resets on every cold start.
+
+Copy `.env.example` to `.env.local` and fill in your values. `.env.local` is already git-ignored.
 
 ---
 
@@ -91,4 +98,11 @@ Every result page includes a "Want us to fix this?" CTA directly to `/services/w
 
 ## Deployment
 
-Deploy to Vercel. Add `RESEND_API_KEY` as an environment variable in the Vercel dashboard.
+Deploy to Vercel. Add the following environment variables in the Vercel dashboard:
+
+| Variable | Description |
+|---|---|
+| `RESEND_API_KEY` | Resend API key for email delivery |
+| `NEXT_PUBLIC_BASE_URL` | `https://geo.darlingmartech.com` |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token |

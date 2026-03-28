@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://geo.darlingmartech.com'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: 'GEO Readiness Auditor — Is Your Site Visible to AI?',
   description:
     'Find out in 60 seconds if your website is visible to AI assistants like ChatGPT, Perplexity, and Claude. Free GEO Readiness Score with prioritized fixes.',
@@ -9,9 +12,24 @@ export const metadata: Metadata = {
     title: 'GEO Readiness Auditor — Is Your Site Visible to AI?',
     description:
       'Free AI visibility audit for your website. Get your GEO Readiness Score in 60 seconds.',
-    url: 'https://geo.darlingmartech.com',
+    url: BASE_URL,
     siteName: 'Darling Marketing & Tech',
     type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'GEO Readiness Auditor — sample audit score gauge',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'GEO Readiness Auditor — Is Your Site Visible to AI?',
+    description:
+      'Free AI visibility audit for your website. Get your GEO Readiness Score in 60 seconds.',
+    images: ['/opengraph-image'],
   },
 }
 

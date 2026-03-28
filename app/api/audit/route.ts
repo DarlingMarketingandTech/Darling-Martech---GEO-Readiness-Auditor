@@ -61,7 +61,7 @@ function classifyError(err: unknown): { code: AuditErrorCode; message: string } 
   if (msg.includes('timeout') || msg.includes('timed out') || err.name === 'TimeoutError') {
     return {
       code: 'TIMEOUT',
-      message: 'The target URL took too long to respond (>15 s). Check that the site is live and publicly accessible.',
+      message: 'The target URL took too long to respond (>10 s). Check that the site is live and publicly accessible.',
     }
   }
 
