@@ -1,6 +1,6 @@
 import AuditForm from '@/components/AuditForm'
 import type { Metadata } from 'next'
-import { SITE_ORIGIN, SITE_HOSTNAME, geoOptimizationUrl } from '@/lib/site'
+import { SITE_ORIGIN, SITE_HOSTNAME } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'GEO Readiness Auditor — Is Your Site Visible to AI?',
@@ -20,26 +20,6 @@ const CHECKS_PREVIEW = [
 export default function HomePage() {
   return (
     <main className="min-h-screen" style={{ background: '#0A0A0A' }}>
-      {/* Nav */}
-      <nav className="border-b px-6 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <a
-            href={SITE_ORIGIN}
-            className="text-sm font-semibold transition-colors"
-            style={{ color: 'rgba(255,255,255,0.7)' }}
-          >
-            ← Darling Marketing &amp; Tech
-          </a>
-          <a
-            href={geoOptimizationUrl()}
-            className="text-sm font-semibold transition-colors"
-            style={{ color: '#FF4D00' }}
-          >
-            GEO Optimization Service
-          </a>
-        </div>
-      </nav>
-
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-16 text-center">
         <div
@@ -107,29 +87,6 @@ export default function HomePage() {
               <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>{item.desc}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Social proof / CTA strip */}
-      <section
-        className="px-6 py-12"
-        style={{
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(255,255,255,0.02)',
-        }}
-      >
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-base mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            &ldquo;I built this tool to demonstrate exactly how I audit client sites before starting GEO work.&rdquo;
-          </p>
-          <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.35)' }}>— Darling Marketing &amp; Tech</p>
-          <a
-            href={geoOptimizationUrl()}
-            className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl transition-colors duration-150"
-            style={{ background: '#FF4D00', color: '#fff' }}
-          >
-            Learn About Our GEO Optimization Service →
-          </a>
         </div>
       </section>
 
