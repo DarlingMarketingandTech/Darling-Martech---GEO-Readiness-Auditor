@@ -29,15 +29,13 @@ export default function EmailGate({ result, onUnlocked }: EmailGateProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
-          url: result.url,
-          score: result.score,
-          checks: result.checks,
+          auditData: result,
         }),
       })
 
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error ?? 'Failed to send report. Please try again.')
+        setError(data.message ?? 'Failed to send report. Please try again.')
         return
       }
 

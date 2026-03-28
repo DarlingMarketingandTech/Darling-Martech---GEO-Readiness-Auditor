@@ -1,75 +1,185 @@
+import { z } from 'zod'
 import type { CheckResult } from './auditor'
 
-const AI_BOTS = ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'anthropic-ai', 'CCBot']
+// ---------------------------------------------------------------------------
+// Types & constants
+// ---------------------------------------------------------------------------
+
+const RobotsEntrySchema = z.object({
+  userAgent: z.string(),
+  disallows: z.array(z.string()),
+  allows: z.array(z.string()),
+})
+type RobotsEntry = z.infer<typeof RobotsEntrySchema>
+
+/** AI bots we care about, keyed by canonical name → lowercase alias list */
+const AI_BOTS: Record<string, string[]> = {
+  GPTBot: ['gptbot'],
+  ClaudeBot: ['claudebot', 'anthropic-ai'],
+  PerplexityBot: ['perplexitybot'],
+  'Google-Extended': ['google-extended'],
+  CCBot: ['ccbot'],
+}
+
+const CANONICAL_NAMES = Object.keys(AI_BOTS) // display order
+
+// ---------------------------------------------------------------------------
+// Parser
+// ---------------------------------------------------------------------------
+
+function parseRobotsTxt(text: string): RobotsEntry[] {
+  const entries: RobotsEntry[] = []
+  let current: RobotsEntry | null = null
+
+  for (const raw of text.split('\n')) {
+    const line = raw.split('#')[0].trim() // strip inline comments
+    if (!line) {
+      // blank line ends the current block
+      if (current) {
+        entries.push(RobotsEntrySchema.parse(current))
+        current = null
+      }
+      continue
+    }
+
+    const sep = line.indexOf(':')
+    if (sep === -1) continue
+    const directive = line.slice(0, sep).trim().toLowerCase()
+    const value = line.slice(sep + 1).trim()
+
+    if (directive === 'user-agent') {
+      if (!current) {
+        current = { userAgent: value.toLowerCase(), disallows: [], allows: [] }
+      } else {
+        // multiple User-agent lines in one block → keep a composite key
+        current.userAgent += `|${value.toLowerCase()}`
+      }
+    } else if (directive === 'disallow' && current) {
+      current.disallows.push(value)
+    } else if (directive === 'allow' && current) {
+      current.allows.push(value)
+    }
+  }
+
+  // flush last entry (files without trailing newline)
+  if (current) entries.push(RobotsEntrySchema.parse(current))
+
+  return entries
+}
+
+// ---------------------------------------------------------------------------
+// Bot access resolver
+// ---------------------------------------------------------------------------
+
+type BotAccess = 'allowed' | 'blocked' | 'not-mentioned'
+
+function resolveBotAccess(entries: RobotsEntry[], botAliases: string[]): BotAccess {
+  // Look for an explicit block first, then fall back to wildcard
+  let wildcardEntry: RobotsEntry | undefined
+  let specificEntry: RobotsEntry | undefined
+
+  for (const entry of entries) {
+    const agents = entry.userAgent.split('|')
+    const matchesBot = agents.some(a => botAliases.includes(a))
+    const isWildcard = agents.includes('*')
+
+    if (matchesBot) specificEntry = entry
+    if (isWildcard) wildcardEntry = entry
+  }
+
+  // Specific block wins over wildcard
+  const applicable = specificEntry ?? wildcardEntry
+  if (!applicable) return 'not-mentioned'
+
+  const isBlocked = applicable.disallows.some(path => path === '/')
+  if (isBlocked) {
+    // Check if there's a specific Allow: / that overrides
+    const hasRootAllow = applicable.allows.some(path => path === '/')
+    return hasRootAllow ? 'allowed' : 'blocked'
+  }
+
+  return 'allowed'
+}
+
+// ---------------------------------------------------------------------------
+// Main export
+// ---------------------------------------------------------------------------
 
 export async function checkRobots(url: string): Promise<CheckResult> {
+  let robotsText: string
+
   try {
     const base = new URL(url)
     const robotsUrl = `${base.protocol}//${base.host}/robots.txt`
-
     const res = await fetch(robotsUrl, { signal: AbortSignal.timeout(8000) })
+
     if (!res.ok) {
       return {
-        id: 'robots-txt',
-        label: 'AI Bot Permissions (robots.txt)',
+        id: 'robots-ai-access',
+        label: 'AI Bot Access',
         status: 'warn',
         weight: 20,
-        message: 'robots.txt not found or not accessible',
-        fix: 'Create a robots.txt and explicitly allow GPTBot, ClaudeBot, and PerplexityBot',
+        message: `robots.txt not found (HTTP ${res.status})`,
+        fix: 'Create a robots.txt that explicitly allows GPTBot, ClaudeBot, PerplexityBot, and Google-Extended',
       }
     }
 
-    const text = await res.text()
-    const lines = text.split('\n').map(l => l.trim())
-
-    const blocked: string[] = []
-    const allowed: string[] = []
-
-    for (const bot of AI_BOTS) {
-      const botLower = bot.toLowerCase()
-      // Find User-agent: <bot> blocks
-      let inBlock = false
-      for (const line of lines) {
-        const lineLower = line.toLowerCase()
-        if (lineLower.startsWith('user-agent:')) {
-          const agent = lineLower.replace('user-agent:', '').trim()
-          inBlock = agent === botLower || agent === '*'
-        }
-        if (inBlock && lineLower.startsWith('disallow:')) {
-          const path = lineLower.replace('disallow:', '').trim()
-          if (path === '/' || path === '') {
-            if (path === '/') blocked.push(bot)
-            break
-          }
-        }
-      }
-      if (!blocked.includes(bot)) allowed.push(bot)
-    }
-
-    const blockedCount = blocked.length
-
-    return {
-      id: 'robots-txt',
-      label: 'AI Bot Permissions (robots.txt)',
-      status: blockedCount === 0 ? 'pass' : blockedCount >= AI_BOTS.length / 2 ? 'fail' : 'warn',
-      weight: 20,
-      message:
-        blockedCount === 0
-          ? `All AI crawlers allowed (${allowed.slice(0, 3).join(', ')}…)`
-          : `${blockedCount} AI bot(s) blocked: ${blocked.join(', ')}`,
-      fix:
-        blockedCount > 0
-          ? `Add explicit Allow rules for ${blocked.join(', ')} in robots.txt`
-          : undefined,
-    }
+    robotsText = await res.text()
   } catch {
     return {
-      id: 'robots-txt',
-      label: 'AI Bot Permissions (robots.txt)',
+      id: 'robots-ai-access',
+      label: 'AI Bot Access',
       status: 'warn',
       weight: 20,
-      message: 'Could not fetch robots.txt',
-      fix: 'Ensure robots.txt is accessible and allows AI crawlers',
+      message: 'Could not fetch robots.txt — defaulting to open access assumption',
+      fix: 'Ensure robots.txt is publicly accessible at /robots.txt',
     }
+  }
+
+  const entries = parseRobotsTxt(robotsText)
+
+  const blocked: string[] = []
+  const notMentioned: string[] = []
+  const allowed: string[] = []
+
+  for (const name of CANONICAL_NAMES) {
+    const access = resolveBotAccess(entries, AI_BOTS[name])
+    if (access === 'blocked') blocked.push(name)
+    else if (access === 'not-mentioned') notMentioned.push(name)
+    else allowed.push(name)
+  }
+
+  // Scoring logic
+  if (blocked.length === 0 && notMentioned.length === 0) {
+    return {
+      id: 'robots-ai-access',
+      label: 'AI Bot Access',
+      status: 'pass',
+      weight: 20,
+      message: `All AI crawlers explicitly allowed: ${allowed.join(', ')}`,
+    }
+  }
+
+  if (blocked.length === 0) {
+    // Some bots not explicitly mentioned — likely allowed via wildcard or default
+    return {
+      id: 'robots-ai-access',
+      label: 'AI Bot Access',
+      status: 'warn',
+      weight: 20,
+      message: `${notMentioned.length} AI bot(s) not explicitly addressed: ${notMentioned.join(', ')}`,
+      fix: `Add explicit User-agent blocks for ${notMentioned.join(', ')} with Allow: /`,
+    }
+  }
+
+  const status = blocked.length >= Math.ceil(CANONICAL_NAMES.length / 2) ? 'fail' : 'warn'
+
+  return {
+    id: 'robots-ai-access',
+    label: 'AI Bot Access',
+    status,
+    weight: 20,
+    message: `${blocked.length} AI bot(s) blocked from crawling: ${blocked.join(', ')}`,
+    fix: `Remove Disallow: / rules (or add Allow: /) for ${blocked.join(', ')} in robots.txt`,
   }
 }

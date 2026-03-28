@@ -4,10 +4,16 @@ import { checkSchema } from './schema-checker'
 import {
   checkHeadingHierarchy,
   checkFAQContent,
+  checkParagraphLength,
+  checkDefinitionPatterns,
   checkEEAT,
   checkMetaTags,
 } from './content-checker'
 import { calculateScore, buildSummary } from './scoring'
+
+// ---------------------------------------------------------------------------
+// Exported types
+// ---------------------------------------------------------------------------
 
 export interface AuditResult {
   url: string
@@ -21,10 +27,24 @@ export interface CheckResult {
   id: string
   label: string
   status: 'pass' | 'warn' | 'fail'
+  /** 0–100 weighting; all weights in a run should sum to 100 */
   weight: number
   message: string
   fix?: string
 }
+
+// ---------------------------------------------------------------------------
+// Weight allocation (must sum to 100)
+//
+//  robots-ai-access     20   AI access gate — high impact
+//  schema-markup        20   Structured data richness — high impact
+//  heading-hierarchy    15   Content structure signal
+//  faq-content          15   Q&A / direct-answer readiness
+//  eeat-signals         10   Trust signals
+//  meta-tags            10   Discoverability baseline
+//  paragraph-length      5   Citation-friendliness
+//  definition-patterns   5   Semantic clarity
+// ---------------------------------------------------------------------------
 
 export async function runAudit(url: string): Promise<AuditResult> {
   const checks: CheckResult[] = []
@@ -42,24 +62,30 @@ export async function runAudit(url: string): Promise<AuditResult> {
   const html = await response.text()
   const $ = cheerio.load(html)
 
-  // 2. robots.txt — AI bot permissions
+  // 2. robots.txt — AI bot permissions (async, runs first in parallel)
   const robotsResult = await checkRobots(url)
   checks.push(robotsResult)
 
-  // 3. Schema.org structured data
+  // 3. Schema.org structured data — SMB-focused validation
   checks.push(checkSchema($))
 
-  // 4. Heading hierarchy
+  // 4. Heading hierarchy — H1 uniqueness + level-skip detection
   checks.push(checkHeadingHierarchy($))
 
-  // 5. FAQ / Q&A content
+  // 5. FAQ / Q&A — actual Q+A pair extraction from JSON-LD, details, and containers
   checks.push(checkFAQContent($))
 
-  // 6. E-E-A-T signals
+  // 6. E-E-A-T signals — author, citations, trust links
   checks.push(checkEEAT($))
 
-  // 7. Meta tags & canonical
+  // 7. Meta tags & canonical URL
   checks.push(checkMetaTags($))
+
+  // 8. Paragraph length distribution — AI citation-friendliness
+  checks.push(checkParagraphLength($))
+
+  // 9. Definition patterns — semantic clarity signals
+  checks.push(checkDefinitionPatterns($))
 
   const score = calculateScore(checks)
 
