@@ -2,26 +2,50 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { AuditResult } from '@/lib/auditor'
 
-export default function AuditForm() {
+interface AuditFormProps {
+  onResult?: (result: AuditResult) => void
+  onError?: (error: string) => void
+}
+
+function normalizeUrl(input: string): string {
+  const trimmed = input.trim()
+  if (!trimmed) return trimmed
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+  return `https://${trimmed}`
+}
+
+function validateUrl(input: string): boolean {
+  try {
+    const u = new URL(input)
+    return u.hostname.includes('.')
+  } catch {
+    return false
+  }
+}
+
+export default function AuditForm({ onResult, onError }: AuditFormProps) {
   const router = useRouter()
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  function normalizeUrl(input: string): string {
-    const trimmed = input.trim()
-    if (!trimmed) return trimmed
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
-    return `https://${trimmed}`
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     const normalized = normalizeUrl(url)
     if (!normalized) {
-      setError('Please enter your website URL')
+      const msg = 'Please enter your website URL'
+      setError(msg)
+      onError?.(msg)
+      return
+    }
+    if (!validateUrl(normalized)) {
+      const msg = 'Please enter a valid domain (e.g. example.com)'
+      setError(msg)
+      onError?.(msg)
       return
     }
 
@@ -36,55 +60,105 @@ export default function AuditForm() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error ?? 'Audit failed. Please try again.')
+        const msg = data.error ?? 'Audit failed. Please try again.'
+        setError(msg)
+        onError?.(msg)
         return
       }
 
-      // Store result in sessionStorage then redirect to results page
-      sessionStorage.setItem('auditResult', JSON.stringify(data))
-      router.push('/results')
+      if (onResult) {
+        onResult(data as AuditResult)
+      } else {
+        sessionStorage.setItem('auditResult', JSON.stringify(data))
+        router.push('/results')
+      }
     } catch {
-      setError('Network error. Please check your connection and try again.')
+      const msg = 'Network error. Please check your connection and try again.'
+      setError(msg)
+      onError?.(msg)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto">
+    <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto" noValidate>
       <div className="flex flex-col sm:flex-row gap-3">
+        <label htmlFor="audit-url" className="sr-only">
+          Website URL
+        </label>
         <input
+          id="audit-url"
           type="text"
           value={url}
           onChange={e => setUrl(e.target.value)}
           placeholder="yourdomain.com"
           disabled={loading}
-          className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base disabled:opacity-50"
-          aria-label="Website URL"
+          autoComplete="url"
+          className="flex-1 px-4 py-3 rounded-xl text-base disabled:opacity-50 focus:outline-none transition-all"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            color: '#fff',
+          }}
+          onFocus={e => {
+            e.currentTarget.style.border = '1px solid #FF4D00'
+            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,77,0,0.15)'
+          }}
+          onBlur={e => {
+            e.currentTarget.style.border = '1px solid rgba(255,255,255,0.12)'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+          aria-describedby={error ? 'audit-form-error' : undefined}
+          aria-invalid={!!error}
         />
-        <button
+        <motion.button
           type="submit"
           disabled={loading}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-xl transition-colors duration-150 whitespace-nowrap"
+          whileHover={{ scale: loading ? 1 : 1.03 }}
+          whileTap={{ scale: loading ? 1 : 0.97 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          className="px-6 py-3 rounded-xl font-semibold text-white whitespace-nowrap disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          style={{ background: '#FF4D00', focusRingColor: '#FF4D00' } as React.CSSProperties}
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <motion.svg
+                className="h-4 w-4 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
+                aria-hidden="true"
+              >
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              </motion.svg>
               Auditing…
             </span>
           ) : (
             'Audit My Site →'
           )}
-        </button>
+        </motion.button>
       </div>
-      {error && (
-        <p className="mt-2 text-sm text-red-600" role="alert">
-          {error}
-        </p>
-      )}
+
+      <div aria-live="assertive" aria-atomic="true">
+        <AnimatePresence>
+          {error && (
+            <motion.p
+              id="audit-form-error"
+              role="alert"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 text-sm text-red-400"
+            >
+              {error}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
     </form>
   )
 }

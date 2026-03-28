@@ -30,8 +30,11 @@ export default function ResultsPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0A' }}>
+        <div
+          className="animate-spin w-8 h-8 border-4 border-t-transparent rounded-full"
+          style={{ borderColor: '#FF4D00', borderTopColor: 'transparent' }}
+        />
       </div>
     )
   }
@@ -44,19 +47,28 @@ export default function ResultsPage() {
   const warnCount = result.checks.filter(c => c.status === 'warn').length
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: '#0A0A0A' }}>
       {/* Nav */}
-      <nav className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
+      <nav
+        className="px-6 py-4 sticky top-0 z-10"
+        style={{
+          background: 'rgba(10,10,10,0.95)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link
             href="/"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1"
+            className="text-sm font-medium transition-colors flex items-center gap-1"
+            style={{ color: 'rgba(255,255,255,0.6)' }}
           >
             ← Audit Another Site
           </Link>
           <a
             href="https://darlingmartech.com/services/website-ux/geo-optimization"
-            className="text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors"
+            className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
+            style={{ background: '#FF4D00', color: '#fff' }}
           >
             Fix My Site →
           </a>
@@ -65,36 +77,51 @@ export default function ResultsPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
         {/* Score header */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm">
-          <p className="text-sm text-gray-500 mb-1 font-medium">GEO Readiness Score for</p>
-          <p className="text-gray-700 font-semibold mb-6 truncate">{result.url}</p>
+        <div
+          className="rounded-2xl p-8 text-center"
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          <p className="text-sm mb-1 font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            GEO Readiness Score for
+          </p>
+          <p className="font-semibold mb-6 truncate" style={{ color: 'rgba(255,255,255,0.8)' }}>
+            {result.url}
+          </p>
 
           <div className="flex justify-center mb-6">
             <ScoreGauge score={result.score} size={220} />
           </div>
 
-          <p className="text-gray-600 text-sm max-w-md mx-auto">{result.summary}</p>
+          <p className="text-sm max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {result.summary}
+          </p>
 
           {/* Quick stats */}
-          <div className="flex justify-center gap-6 mt-6 pt-6 border-t border-gray-100">
+          <div
+            className="flex justify-center gap-6 mt-6 pt-6"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+          >
             <div className="text-center">
-              <div className="text-xl font-bold text-green-600">{passCount}</div>
-              <div className="text-xs text-gray-400">Passing</div>
+              <div className="text-xl font-bold text-green-400">{passCount}</div>
+              <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Passing</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-amber-500">{warnCount}</div>
-              <div className="text-xs text-gray-400">Warnings</div>
+              <div className="text-xl font-bold text-amber-400">{warnCount}</div>
+              <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Warnings</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-red-500">{failCount}</div>
-              <div className="text-xs text-gray-400">Failing</div>
+              <div className="text-xl font-bold text-red-400">{failCount}</div>
+              <div className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Failing</div>
             </div>
           </div>
         </div>
 
         {/* Checks */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Audit Results</h2>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: '#fff' }}>Audit Results</h2>
           <div className="space-y-3">
             {visibleChecks.map(check => (
               <CheckItem key={check.id} check={check} />
@@ -117,24 +144,30 @@ export default function ResultsPage() {
 
         {/* CTA */}
         {unlocked && (
-          <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white text-center">
-            <h3 className="text-xl font-bold mb-3">Want us to fix this for you?</h3>
-            <p className="text-blue-100 text-sm mb-6 max-w-md mx-auto">
+          <div
+            className="rounded-2xl p-8 text-white text-center"
+            style={{
+              background: 'linear-gradient(135deg, #FF4D00 0%, #cc3d00 100%)',
+            }}
+          >
+            <h3 className="text-xl font-bold mb-3 font-heading">Want us to fix this for you?</h3>
+            <p className="text-sm mb-6 max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.8)' }}>
               Our GEO Optimization service implements every fix above plus advanced AI
               visibility improvements your competitors haven&apos;t discovered yet.
             </p>
             <a
               href="https://darlingmartech.com/services/website-ux/geo-optimization"
-              className="inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
+              className="inline-flex items-center gap-2 font-bold px-6 py-3 rounded-xl transition-colors"
+              style={{ background: '#fff', color: '#FF4D00' }}
             >
               Get a Free GEO Consultation →
             </a>
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
           Audited at {new Date(result.fetchedAt).toLocaleString()} ·{' '}
-          <Link href="/" className="underline hover:text-gray-600">
+          <Link href="/" className="underline" style={{ color: 'rgba(255,255,255,0.3)' }}>
             Run another audit
           </Link>
         </p>

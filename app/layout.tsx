@@ -22,7 +22,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased bg-white text-gray-900">
+      <head>
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,500,400&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased" style={{ background: '#0A0A0A', color: '#ededed' }}>
         {children}
       </body>
     </html>
