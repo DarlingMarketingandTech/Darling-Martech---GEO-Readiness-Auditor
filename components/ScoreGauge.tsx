@@ -34,7 +34,11 @@ export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
   const rotation = 135
 
   useEffect(() => {
-    setAnimatedOffset(arcLength)
+    const radius = (size / 2) * 0.7
+    const circumference = 2 * Math.PI * radius
+    const arcLen = circumference * 0.75
+
+    setAnimatedOffset(arcLen)
     setDisplayScore(0)
 
     const controls = animate(0, score, {
@@ -42,14 +46,12 @@ export default function ScoreGauge({ score, size = 200 }: ScoreGaugeProps) {
       ease: [0.4, 0, 0.2, 1],
       onUpdate(v) {
         setDisplayScore(Math.round(v))
-        setAnimatedOffset(arcLength - (v / 100) * arcLength)
+        setAnimatedOffset(arcLen - (v / 100) * arcLen)
       },
     })
 
     return () => controls.stop()
-    // arcLength is derived from `size` which doesn't change at runtime; safe to omit
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [score])
+  }, [score, size])
 
   return (
     <div className="flex flex-col items-center gap-2">

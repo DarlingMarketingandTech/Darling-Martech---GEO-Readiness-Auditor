@@ -118,8 +118,8 @@ export default function AuditForm({ onResult, onError }: AuditFormProps) {
           whileHover={{ scale: loading ? 1 : 1.03 }}
           whileTap={{ scale: loading ? 1 : 0.97 }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="px-6 py-3 rounded-xl font-semibold text-white whitespace-nowrap disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          style={{ background: '#FF4D00', focusRingColor: '#FF4D00' } as React.CSSProperties}
+          className="px-6 py-3 rounded-xl font-semibold text-white whitespace-nowrap disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D00] focus-visible:ring-offset-2"
+          style={{ background: '#FF4D00' }}
         >
           {loading ? (
             <span className="flex items-center gap-2">
