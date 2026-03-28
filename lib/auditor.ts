@@ -27,7 +27,7 @@ export interface CheckResult {
   id: string
   label: string
   status: 'pass' | 'warn' | 'fail'
-  /** 0–100 weighting; all weights in a run should sum to 100 */
+  /** 0–100 scale per check; weights in a run sum to 100 */
   weight: number
   message: string
   fix?: string
@@ -36,14 +36,14 @@ export interface CheckResult {
 // ---------------------------------------------------------------------------
 // Weight allocation (actual weights come from each checker function)
 //
-//  robots-ai-access     20   AI access gate — high impact
-//  schema-markup        20   Structured data richness — high impact
-//  heading-hierarchy    15   Content structure signal
-//  faq-content          15   Q&A / direct-answer readiness
-//  eeat-signals         15   Trust signals (author, about, citations)
-//  meta-tags            10   Discoverability baseline
-//  paragraph-length     10   Citation-friendliness
-//  definition-patterns  10   Semantic clarity
+//  robots-ai-access      17   AI access gate — high impact
+//  schema-markup         17   Structured data richness — high impact
+//  heading-hierarchy     13   Content structure signal
+//  faq-content           13   Q&A / direct-answer readiness
+//  eeat-signals          13   Trust signals (author, about, citations)
+//  meta-tags              9   Discoverability baseline
+//  paragraph-length       9   Citation-friendliness
+//  definition-patterns    9   Semantic clarity
 //
 //  Score is calculated as earned/totalWeight × 100 (self-normalising).
 // ---------------------------------------------------------------------------

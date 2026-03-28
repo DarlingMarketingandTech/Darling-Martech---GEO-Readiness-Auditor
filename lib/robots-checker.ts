@@ -12,13 +12,12 @@ const RobotsEntrySchema = z.object({
 })
 type RobotsEntry = z.infer<typeof RobotsEntrySchema>
 
-/** AI bots we care about, keyed by canonical name → lowercase alias list */
+/** AI bots we care about (product spec), keyed by canonical name → lowercase alias list */
 const AI_BOTS: Record<string, string[]> = {
   GPTBot: ['gptbot'],
   ClaudeBot: ['claudebot', 'anthropic-ai'],
   PerplexityBot: ['perplexitybot'],
   'Google-Extended': ['google-extended'],
-  CCBot: ['ccbot'],
 }
 
 const CANONICAL_NAMES = Object.keys(AI_BOTS) // display order
@@ -118,7 +117,7 @@ export async function checkRobots(url: string): Promise<CheckResult> {
         id: 'robots-ai-access',
         label: 'AI Bot Access',
         status: 'warn',
-        weight: 20,
+        weight: 17,
         message: `robots.txt not found (HTTP ${res.status})`,
         fix: 'Create a robots.txt that explicitly allows GPTBot, ClaudeBot, PerplexityBot, and Google-Extended',
       }
@@ -130,7 +129,7 @@ export async function checkRobots(url: string): Promise<CheckResult> {
       id: 'robots-ai-access',
       label: 'AI Bot Access',
       status: 'warn',
-      weight: 20,
+      weight: 17,
       message: 'Could not fetch robots.txt — defaulting to open access assumption',
       fix: 'Ensure robots.txt is publicly accessible at /robots.txt',
     }
@@ -155,7 +154,7 @@ export async function checkRobots(url: string): Promise<CheckResult> {
       id: 'robots-ai-access',
       label: 'AI Bot Access',
       status: 'pass',
-      weight: 20,
+      weight: 17,
       message: `All AI crawlers explicitly allowed: ${allowed.join(', ')}`,
     }
   }
@@ -166,7 +165,7 @@ export async function checkRobots(url: string): Promise<CheckResult> {
       id: 'robots-ai-access',
       label: 'AI Bot Access',
       status: 'warn',
-      weight: 20,
+      weight: 17,
       message: `${notMentioned.length} AI bot(s) not explicitly addressed: ${notMentioned.join(', ')}`,
       fix: `Add explicit User-agent blocks for ${notMentioned.join(', ')} with Allow: /`,
     }
@@ -178,7 +177,7 @@ export async function checkRobots(url: string): Promise<CheckResult> {
     id: 'robots-ai-access',
     label: 'AI Bot Access',
     status,
-    weight: 20,
+    weight: 17,
     message: `${blocked.length} AI bot(s) blocked from crawling: ${blocked.join(', ')}`,
     fix: `Remove Disallow: / rules (or add Allow: /) for ${blocked.join(', ')} in robots.txt`,
   }

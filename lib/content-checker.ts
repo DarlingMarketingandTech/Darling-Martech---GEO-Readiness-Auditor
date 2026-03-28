@@ -1,5 +1,43 @@
+import { z } from 'zod'
 import type { CheerioAPI } from 'cheerio'
 import type { CheckResult } from './auditor'
+
+// ---------------------------------------------------------------------------
+// Zod — JSON-LD FAQ entities (structure validation only; loose objects allowed)
+// ---------------------------------------------------------------------------
+
+const QuestionEntitySchema = z
+  .object({
+    '@type': z.union([z.string(), z.array(z.string())]).optional(),
+    name: z.string().optional(),
+    acceptedAnswer: z
+      .union([
+        z.object({ text: z.string().optional() }).passthrough(),
+        z.array(z.object({ text: z.string().optional() }).passthrough()),
+      ])
+      .optional(),
+  })
+  .passthrough()
+
+function jsonLdTypeList(raw: unknown): string[] {
+  if (typeof raw === 'string') return [raw]
+  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === 'string')
+  return []
+}
+
+function itemHasSchemaType(item: Record<string, unknown>, typeName: string): boolean {
+  return jsonLdTypeList(item['@type']).some(t => t === typeName || t.endsWith(typeName))
+}
+
+function answerTextFromAcceptedAnswer(
+  accepted: z.infer<typeof QuestionEntitySchema>['acceptedAnswer']
+): string {
+  if (!accepted) return ''
+  if (Array.isArray(accepted)) {
+    return accepted.map(a => String(a?.text ?? '')).join(' ').trim()
+  }
+  return String(accepted.text ?? '').trim()
+}
 
 // ---------------------------------------------------------------------------
 // 1. Heading Hierarchy
@@ -54,7 +92,7 @@ export function checkHeadingHierarchy($: CheerioAPI): CheckResult {
     id: 'heading-hierarchy',
     label: 'Heading Hierarchy',
     status,
-    weight: 15,
+    weight: 13,
     message:
       issues.length === 0
         ? `Correct heading structure: 1 H1 + ${h2Count} H2 sub-sections`
@@ -91,21 +129,20 @@ function extractFAQPairs($: CheerioAPI): FAQPair[] {
       const parsed = JSON.parse(raw)
       const items: unknown[] = Array.isArray(parsed) ? parsed : [parsed]
       for (const item of items) {
-        if (
-          item &&
-          typeof item === 'object' &&
-          (item as Record<string, unknown>)['@type'] === 'FAQPage'
-        ) {
-          const entities = (item as Record<string, unknown>)['mainEntity']
-          if (Array.isArray(entities)) {
-            for (const q of entities) {
-              const qObj = q as Record<string, unknown>
-              const question = String(qObj['name'] ?? '').trim()
-              const answerObj = qObj['acceptedAnswer'] as Record<string, unknown> | undefined
-              const answer = String(answerObj?.['text'] ?? '').trim()
-              if (question && answer) pairs.push({ question, answer })
-            }
-          }
+        if (!item || typeof item !== 'object') continue
+        const rec = item as Record<string, unknown>
+        if (!itemHasSchemaType(rec, 'FAQPage')) continue
+
+        const entities = rec['mainEntity']
+        const entityList = Array.isArray(entities) ? entities : entities ? [entities] : []
+
+        for (const q of entityList) {
+          const parsedQ = QuestionEntitySchema.safeParse(q)
+          if (!parsedQ.success) continue
+          const question = String(parsedQ.data.name ?? '').trim()
+          const answer = answerTextFromAcceptedAnswer(parsedQ.data.acceptedAnswer)
+          // Many FAQ blocks omit @type: Question on each mainEntity item; name + answer is enough
+          if (question && answer) pairs.push({ question, answer })
         }
       }
     } catch {
@@ -113,13 +150,13 @@ function extractFAQPairs($: CheerioAPI): FAQPair[] {
     }
   })
 
-  // ── <details>/<summary> ────────────────────────────────────────────────
+  // ── <details>/<summary> (clone so we do not mutate the shared Cheerio document) ──
   $('details').each((_, details) => {
-    const summary = $(details).find('summary').first()
-    const question = summary.text().trim()
-    // Answer = all text content of <details> minus the <summary>
-    summary.remove()
-    const answer = $(details).text().trim()
+    const $details = $(details)
+    const $clone = $details.clone()
+    const question = $clone.find('summary').first().text().replace(/\s+/g, ' ').trim()
+    $clone.find('summary').remove()
+    const answer = $clone.text().replace(/\s+/g, ' ').trim()
     if (question && answer.length > 20) {
       pairs.push({ question, answer: answer.slice(0, 200) })
     }
@@ -155,7 +192,7 @@ export function checkFAQContent($: CheerioAPI): CheckResult {
       id: 'faq-content',
       label: 'FAQ / Q&A Content',
       status: 'warn',
-      weight: 15,
+      weight: 13,
       message: 'No Q&A structures detected (JSON-LD FAQPage, <details>/<summary>, or FAQ containers)',
       fix: 'Add 3–5 Q&A pairs per service page using FAQPage schema + <details>/<summary> HTML. AI assistants use Q&A content for direct answers.',
     }
@@ -167,7 +204,7 @@ export function checkFAQContent($: CheerioAPI): CheckResult {
     id: 'faq-content',
     label: 'FAQ / Q&A Content',
     status,
-    weight: 15,
+    weight: 13,
     message:
       count >= 5
         ? `Strong Q&A content: ${count} question/answer pair(s) detected`
@@ -205,7 +242,7 @@ export function checkParagraphLength($: CheerioAPI): CheckResult {
       id: 'paragraph-length',
       label: 'Paragraph Length & Density',
       status: 'warn',
-      weight: 10,
+      weight: 9,
       message: 'No substantial paragraph content found — AI cannot extract citable snippets',
       fix: 'Structure your main content in <p> tags. Aim for 150–300 characters per paragraph for AI citation.',
     }
@@ -230,7 +267,7 @@ export function checkParagraphLength($: CheerioAPI): CheckResult {
     id: 'paragraph-length',
     label: 'Paragraph Length & Density',
     status,
-    weight: 10,
+    weight: 9,
     message:
       issues.length === 0
         ? `${total} paragraphs — ${idealPct}% in the AI-optimal 150–300 char range`
@@ -305,7 +342,7 @@ export function checkDefinitionPatterns($: CheerioAPI): CheckResult {
     id: 'definition-patterns',
     label: 'Definition & Clarity Patterns',
     status,
-    weight: 10,
+    weight: 9,
     message:
       definitionCount >= 2
         ? `${definitionCount} definition signal(s) found: ${signals.join(', ')}`
@@ -348,7 +385,7 @@ export function checkEEAT($: CheerioAPI): CheckResult {
     id: 'eeat-signals',
     label: 'E-E-A-T Signals',
     status: count >= 3 ? 'pass' : count >= 1 ? 'warn' : 'fail',
-    weight: 15,
+    weight: 13,
     message:
       count >= 3
         ? `Strong E-E-A-T signals: ${signals.join(', ')}`
@@ -392,7 +429,7 @@ export function checkMetaTags($: CheerioAPI): CheckResult {
     id: 'meta-tags',
     label: 'Meta Tags & Canonical',
     status,
-    weight: 10,
+    weight: 9,
     message:
       issues.length === 0
         ? `All meta tags present: ${good.join(', ')}`

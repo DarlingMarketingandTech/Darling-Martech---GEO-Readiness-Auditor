@@ -8,7 +8,7 @@ import type { CheckResult } from './auditor'
 
 /** Minimal required fields per schema type (SMB focus) */
 const SMB_TYPE_REQUIREMENTS: Record<string, string[]> = {
-  LocalBusiness: ['name', 'address', 'url', 'telephone'],
+  LocalBusiness: ['name', 'address', 'url', 'description'],
   Organization: ['name', 'url', 'description'],
   Service: ['name', 'description', 'provider'],
   FAQPage: ['mainEntity'],
@@ -113,7 +113,7 @@ export function checkSchema($: CheerioAPI): CheckResult {
       id: 'schema-markup',
       label: 'Schema Markup',
       status: 'fail',
-      weight: 20,
+      weight: 17,
       message: 'No JSON-LD schema blocks found on this page',
       fix: `Add Schema.org JSON-LD for at least: ${SMB_PRIORITY_TYPES.join(', ')}. Use Google's Structured Data Markup Helper to get started.`,
     }
@@ -127,7 +127,7 @@ export function checkSchema($: CheerioAPI): CheckResult {
       id: 'schema-markup',
       label: 'Schema Markup',
       status: 'fail',
-      weight: 20,
+      weight: 17,
       message: `Found ${blockCount} JSON-LD block(s) but all failed to parse — likely malformed JSON`,
       fix: 'Validate your JSON-LD with https://validator.schema.org and fix syntax errors',
     }
@@ -154,7 +154,7 @@ export function checkSchema($: CheerioAPI): CheckResult {
       id: 'schema-markup',
       label: 'Schema Markup',
       status,
-      weight: 20,
+      weight: 17,
       message: messageParts.join(' · '),
       fix: `Add missing schema types: ${analysis.missingSMBTypes.join(', ')}. Ensure each block includes: name, address (LocalBusiness), url, and description fields.`,
     }
@@ -171,7 +171,7 @@ export function checkSchema($: CheerioAPI): CheckResult {
       id: 'schema-markup',
       label: 'Schema Markup',
       status: 'warn',
-      weight: 20,
+      weight: 17,
       message: `All SMB schema types present but incomplete — ${fieldDetails}`,
       fix: `Fill in missing fields to maximise AI citation potential: ${fieldDetails}`,
     }
@@ -186,7 +186,7 @@ export function checkSchema($: CheerioAPI): CheckResult {
     id: 'schema-markup',
     label: 'Schema Markup',
     status: 'pass',
-    weight: 20,
+    weight: 17,
     message: `Complete SMB schema markup found: ${analysis.presentSMBTypes.join(', ')}${malformedNote}`,
   }
 }
