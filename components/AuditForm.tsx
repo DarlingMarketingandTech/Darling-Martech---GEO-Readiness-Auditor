@@ -26,35 +26,23 @@ function validateUrl(input: string): boolean {
   }
 }
 
+/** Demo URL shown when the user clicks "Try with example domain" */
+const DEMO_URL = 'https://darlingmartech.com'
+
 export default function AuditForm({ onResult, onError }: AuditFormProps) {
   const router = useRouter()
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function runAuditFor(target: string) {
     setError('')
-    const normalized = normalizeUrl(url)
-    if (!normalized) {
-      const msg = 'Please enter your website URL'
-      setError(msg)
-      onError?.(msg)
-      return
-    }
-    if (!validateUrl(normalized)) {
-      const msg = 'Please enter a valid domain (e.g. example.com)'
-      setError(msg)
-      onError?.(msg)
-      return
-    }
-
     setLoading(true)
     try {
       const res = await fetch('/api/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: normalized }),
+        body: JSON.stringify({ url: target }),
       })
 
       const data = await res.json()
@@ -79,6 +67,30 @@ export default function AuditForm({ onResult, onError }: AuditFormProps) {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleDemo() {
+    setUrl(DEMO_URL)
+    await runAuditFor(DEMO_URL)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    const normalized = normalizeUrl(url)
+    if (!normalized) {
+      const msg = 'Please enter your website URL'
+      setError(msg)
+      onError?.(msg)
+      return
+    }
+    if (!validateUrl(normalized)) {
+      const msg = 'Please enter a valid domain (e.g. example.com)'
+      setError(msg)
+      onError?.(msg)
+      return
+    }
+    await runAuditFor(normalized)
   }
 
   return (
@@ -159,6 +171,20 @@ export default function AuditForm({ onResult, onError }: AuditFormProps) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Demo shortcut */}
+      <p className="mt-3 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        Not sure what to enter?{' '}
+        <button
+          type="button"
+          onClick={handleDemo}
+          disabled={loading}
+          className="underline underline-offset-2 transition-colors disabled:opacity-40"
+          style={{ color: 'rgba(255,77,0,0.8)' }}
+        >
+          Try with darlingmartech.com →
+        </button>
+      </p>
     </form>
   )
 }

@@ -34,25 +34,27 @@ export interface CheckResult {
 }
 
 // ---------------------------------------------------------------------------
-// Weight allocation (must sum to 100)
+// Weight allocation (actual weights come from each checker function)
 //
 //  robots-ai-access     20   AI access gate — high impact
 //  schema-markup        20   Structured data richness — high impact
 //  heading-hierarchy    15   Content structure signal
 //  faq-content          15   Q&A / direct-answer readiness
-//  eeat-signals         10   Trust signals
+//  eeat-signals         15   Trust signals (author, about, citations)
 //  meta-tags            10   Discoverability baseline
-//  paragraph-length      5   Citation-friendliness
-//  definition-patterns   5   Semantic clarity
+//  paragraph-length     10   Citation-friendliness
+//  definition-patterns  10   Semantic clarity
+//
+//  Score is calculated as earned/totalWeight × 100 (self-normalising).
 // ---------------------------------------------------------------------------
 
 export async function runAudit(url: string): Promise<AuditResult> {
   const checks: CheckResult[] = []
 
-  // 1. Fetch the page HTML
+  // 1. Fetch the page HTML — hard timeout keeps API response under 10 s
   const response = await fetch(url, {
     headers: { 'User-Agent': 'GEOAuditor/1.0 (+https://geo.darlingmartech.com)' },
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(10000), // 10 s max per the product spec
   })
 
   if (!response.ok) {
